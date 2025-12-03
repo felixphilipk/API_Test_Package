@@ -1,0 +1,15 @@
+[
+    {
+        "name": "Carbon credits category (GET)",
+        "request": {
+            "method": "GET",
+            "url": "https://api.tmsandbox.co.nz/v1/Categories/6327/Details.json",
+            "params": {"catalogue": false}
+        },
+        "assertions": {
+            "Name": {"validator": "exact", "expected": "Carbon credits"},
+            "CanRelist": {"validator": "exact", "expected": true},
+            "Promotions.1.Description": {"validator": "contains", "expected": "Good position in category"}
+        }
+    }
+]
