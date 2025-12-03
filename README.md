@@ -3,8 +3,8 @@
 Pytest-based harness for running JSON-defined API tests.
 
 ## Prerequisites
-- Python 3.10+ (uses modern typing)
-- Pip; virtualenv optional but recommended
+- Python 3.10+ 
+- Pip; virtualenv
 
 ## Installation
 ```bash
@@ -17,6 +17,23 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
+## Running Tests
+```bash
+pytest
+```
+Pytest will discover `test_api.py` and automatically load every JSON-defined case.
+
+## Current Test Cases
+From `test_definition.json`:
+- `Carbon credits category (GET)` - GET `https://api.tmsandbox.co.nz/v1/Categories/6327/Details.json?catalogue=false`; asserts name, relist flag, and promotion description.
+
+### Acceptance Criteria Coverage (current implementation)
+- API target: `https://api.tmsandbox.co.nz/v1/Categories/6327/Details.json` with `catalogue=false`.
+- Assertions executed by `test_api.py::test_api_endpoint` for the `Carbon credits category (GET)` case:
+  - `Name` -> `exact` equals `"Carbon credits"`.
+  - `CanRelist` -> `exact` equals `true`.
+  - `Promotions.1.Description` -> `contains` `"Good position in category"` (the "Gallery" promotion entry).
+
 ## Project Layout
 - `api_client.py` - thin wrapper over `requests` with retries/backoff and header merging.
 - `auth.py` - optional helper to log in and fetch a token using environment variables.
@@ -24,13 +41,13 @@ pip install -r requirements.txt
 - `test_loader.py` - loads `test_definition*.json` files into memory.
 - `conftest.py` - session fixtures for a shared `ApiClient` and optional auth token handling.
 - `test_api.py` - parameterized test that executes each JSON-defined case.
-- `test_definition.json` - example test cases; add more `test_definition*.json` files as needed.
+- `test_definition.json` -  test cases meeting acceptance criteria; add more `test_definition*.json` files as needed.
 
 ## How the Test Runner Works
 1) Test cases are read from every `test_definition*.json` file in the repo root. Each file must contain a JSON array.  
 2) Pytest parametrizes `test_api.py::test_api_endpoint` with those cases.  
 3) For each case, an HTTP request is issued and the response JSON is validated via the chosen validators.  
-4) Headers that contain `{{ACCESS_TOKEN}}` are replaced with a session token (see Auth below).
+4) Headers that contain `{{ACCESS_TOKEN}}` are replaced with a session token.
 
 ## JSON Test Case Schema
 ```json
@@ -58,10 +75,6 @@ pip install -r requirements.txt
 - Current validators:
   - `exact` -> `validate_exact`: `actual == expected`
   - `contains` -> `validate_contains`: `expected` substring must be present in `actual` (string)
-- Example from `test_definition.json`:
-  - `"Name": {"validator": "exact", "expected": "Carbon credits"}` asserts the JSON field `Name` equals `"Carbon credits"`.
-  - `"CanRelist": {"validator": "exact", "expected": true}` asserts `CanRelist` is `true`.
-  - `"Promotions.1.Description": {"validator": "contains", "expected": "Good position in category"}` asserts the second promotion's description contains the provided substring.
 
 ## Auth and Tokens
 - If any header uses `{{ACCESS_TOKEN}}`, the test session fetches a token once. Two options:
@@ -83,12 +96,3 @@ pip install -r requirements.txt
 - Re-run `pytest` after changes to catch schema or assertion mistakes.
 - Extend `validators.py` instead of inlining assertion logic elsewhere to keep cases declarative.
 
-## Running Tests
-```bash
-pytest
-```
-Pytest will discover `test_api.py` and automatically load every JSON-defined case.
-
-## Current Test Cases
-From `test_definition.json`:
-- `Carbon credits category (GET)` - GET `https://api.tmsandbox.co.nz/v1/Categories/6327/Details.json?catalogue=false`; asserts name, relist flag, and promotion description.
